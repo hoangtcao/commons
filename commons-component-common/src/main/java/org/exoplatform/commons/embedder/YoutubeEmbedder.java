@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.portal.application.PortalRequestContext;
+import org.exoplatform.portal.webui.util.Util;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -59,10 +61,17 @@ public class YoutubeEmbedder extends AbstractEmbedder {
    */
   public ExoMedia getExoMedia() {
     String feedsURL = null;
+    String scheme = "http";
     for(Pattern pattern : schemeEndpointMap.keySet()) {
       Matcher matcher = pattern.matcher(url);
       if(matcher.find()) {
         feedsURL = schemeEndpointMap.get(pattern);
+        try {
+          PortalRequestContext portalRequestContext = Util.getPortalRequestContext();
+          scheme = portalRequestContext.getRequest().getScheme();
+        } catch (Exception e) {
+          LOG.info("Cannot get scheme from Portal Request Context");
+        }
       } else {
         return null;
       }
@@ -78,7 +87,7 @@ public class YoutubeEmbedder extends AbstractEmbedder {
       }
        
       String youTubeFeedURL = String.format(feedsURL, youtubeId);
-      URL reqURL = new URL(youTubeFeedURL);
+      URL reqURL = new URL(correctURIString(youTubeFeedURL, scheme, false));
       
       JSONObject jsonObject = getJSONObject(reqURL);
       
